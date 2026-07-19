@@ -11,6 +11,7 @@ import Portfolio from './components/Portfolio'
 import Hero from './components/Hero'
 import Welcome from './components/Welcome'
 import Projects from './components/Projects'
+import Skills from './components/Skills'
 import Services from './components/Services'
 import Contact from './components/Contact'
 import Footer from './components/Footer'
@@ -74,6 +75,10 @@ function App() {
 
         <section id="service">
           <Services />
+        </section>
+
+        <section id="skills">
+          <Skills />
         </section>
 
         <section id="contact">

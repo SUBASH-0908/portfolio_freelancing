@@ -3,7 +3,7 @@ import gsap from 'gsap'
 import { FaTimes, FaBars } from 'react-icons/fa'
 import { FaWhatsapp, FaInstagram, FaLinkedinIn, FaGithub } from 'react-icons/fa'
 
-const navLinks = ['Home', 'About', 'Portfolio', 'Skills', 'Service', 'Contact']
+const navLinks = ['Home', 'About', 'Portfolio', 'Service', 'Skills', 'Contact']
 const SHOW_AT  = 40   // px — nav content appears after scrolling this far
 
 export default function Navbar() {
@@ -71,13 +71,16 @@ export default function Navbar() {
   }, [])
 
   const scrollTo = (id) => {
-    const target = document.getElementById(
-      id === 'Home'      ? 'home'
-      : id === 'About'   ? 'about'
-      : id === 'Portfolio' ? 'portfolio'
-      : id === 'Service' ? 'service'
-      : 'contact'
-    )
+    const map = {
+      Home:      'home',
+      About:     'about',
+      Portfolio: 'portfolio',
+      Projects:  'projects',
+      Service:   'service',
+      Skills:    'skills',
+      Contact:   'contact',
+    }
+    const target = document.getElementById(map[id] ?? id.toLowerCase())
     target?.scrollIntoView({ behavior: 'smooth' })
     setMobileOpen(false)
   }
