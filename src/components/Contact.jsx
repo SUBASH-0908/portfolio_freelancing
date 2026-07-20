@@ -1,16 +1,13 @@
 import { useRef, useState } from 'react'
-import emailjs from '@emailjs/browser'
 import { FaWhatsapp, FaInstagram, FaLinkedinIn, FaGithub } from 'react-icons/fa'
 
 /* ─────────────────────────────────────────────────────────────────
-   STEP 1 — Fill these in after following the setup guide
-   Replace each placeholder with your real values from EmailJS
-   and Google Apps Script.
+   Google Apps Script URL — handles BOTH:
+   ✅ Saving lead data to Google Sheet
+   ✅ Sending a professional auto-reply email to the user
+   (No EmailJS needed at all)
 ───────────────────────────────────────────────────────────────── */
-const EMAILJS_SERVICE_ID   = 'service_fq8l13x'      // ✅ done
-const EMAILJS_NOTIFY_ID    = 'hyxvosh'               // ✅ done
-const EMAILJS_PUBLIC_KEY   = 'FxC9tY1OJesKYgOwV'       // ← paste public key here
-const GOOGLE_SHEET_URL     = 'https://script.google.com/macros/s/AKfycbz-Eq9srl5fioC3mu1WyqhDLdxcURbhWsVMydoiNqAgwCRQ3QSSYRci5wFNe9qO15yn/exec' // ✅ done
+const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbz-Eq9srl5fioC3mu1WyqhDLdxcURbhWsVMydoiNqAgwCRQ3QSSYRci5wFNe9qO15yn/exec'
 
 const socialLinks = [
   {
@@ -19,15 +16,15 @@ const socialLinks = [
     href: `https://wa.me/917904434191?text=${encodeURIComponent('Hi Subash! I found your portfolio and would love to discuss a project.')}`,
     color: '#25D366',
   },
-  { icon: FaInstagram, label: 'Instagram', href: 'https://instagram.com',             color: '#E1306C' },
+  { icon: FaInstagram, label: 'Instagram', href: 'https://instagram.com',                  color: '#E1306C' },
   { icon: FaLinkedinIn, label: 'LinkedIn', href: 'https://linkedin.com/in/subash-hochimin', color: '#0A66C2' },
-  { icon: FaGithub,    label: 'GitHub',   href: 'https://github.com/SUBASH-0908',    color: '#6e40c9' },
+  { icon: FaGithub,    label: 'GitHub',   href: 'https://github.com/SUBASH-0908',           color: '#6e40c9' },
 ]
 
 export default function Contact() {
   const formRef = useRef(null)
-  const [form,    setForm]    = useState({ name: '', email: '', message: '' })
-  const [status,  setStatus]  = useState('idle') // idle | sending | success | error
+  const [form,   setForm]   = useState({ name: '', email: '', message: '' })
+  const [status, setStatus] = useState('idle') // idle | sending | success | error
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -35,46 +32,37 @@ export default function Contact() {
     setStatus('sending')
 
     try {
-      /* Send via EmailJS — one call handles:
-         • Content tab    → notification to Subash
-         • Auto-Reply tab → auto-reply to user's email */
-      await emailjs.send(
-        EMAILJS_SERVICE_ID,
-        EMAILJS_NOTIFY_ID,
-        { user_name: form.name, user_email: form.email, message: form.message },
-        EMAILJS_PUBLIC_KEY
-      )
+      /* One fetch call to Google Apps Script:
+         → Stores the lead in your Google Sheet
+         → Sends a professional auto-reply email to the user */
+      await fetch(GOOGLE_SHEET_URL, {
+        method:  'POST',
+        mode:    'no-cors',           // required for Apps Script
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          name:      form.name,
+          email:     form.email,
+          message:   form.message,
+          timestamp: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+        }),
+      })
 
-      /* Save to Google Sheets (fire-and-forget) */
-      if (GOOGLE_SHEET_URL && GOOGLE_SHEET_URL.startsWith('https://')) {
-        fetch(GOOGLE_SHEET_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name:      form.name,
-            email:     form.email,
-            message:   form.message,
-            timestamp: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
-          }),
-        }).catch(() => {}) // silent — sheet save never blocks UX
-      }
-
+      // no-cors means we can't read the response, but the script runs fine
       setStatus('success')
       setForm({ name: '', email: '', message: '' })
-      setTimeout(() => setStatus('idle'), 5000)
+      setTimeout(() => setStatus('idle'), 6000)
 
     } catch (err) {
-      console.error('EmailJS error:', err)
+      console.error('Contact form error:', err)
       setStatus('error')
-      setTimeout(() => setStatus('idle'), 4000)
+      setTimeout(() => setStatus('idle'), 5000)
     }
   }
 
-  const fieldCls = 'w-full px-4 py-3.5 rounded-xl text-white text-sm placeholder-white/30 outline-none transition-all duration-300'
+  const fieldCls   = 'w-full px-4 py-3.5 rounded-xl text-white text-sm placeholder-white/30 outline-none transition-all duration-300'
   const fieldStyle = { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }
-  const onFocus = (e) => (e.target.style.borderColor = 'rgba(250,204,21,0.5)')
-  const onBlur  = (e) => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')
+  const onFocus    = (e) => (e.target.style.borderColor = 'rgba(250,204,21,0.5)')
+  const onBlur     = (e) => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')
 
   return (
     <section
@@ -153,7 +141,7 @@ export default function Contact() {
             className={`${fieldCls} resize-none`} style={fieldStyle} onFocus={onFocus} onBlur={onBlur}
           />
 
-          {/* Success / Error message */}
+          {/* Success message */}
           {status === 'success' && (
             <div className="rounded-xl px-5 py-4 text-sm font-semibold text-center"
               style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.3)', color: '#4ade80' }}>
@@ -163,6 +151,7 @@ export default function Contact() {
             </div>
           )}
 
+          {/* Error message */}
           {status === 'error' && (
             <div className="rounded-xl px-5 py-4 text-sm font-semibold text-center"
               style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171' }}>
